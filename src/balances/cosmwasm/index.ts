@@ -1,31 +1,45 @@
-import { CosmWasmClient } from "cosmwasm";
-
+import { SigningCosmWasmClient } from "cosmwasm";
+var crypto = require('crypto'); //importing the other way gave me errors check this
 
 export async function pullCosmWasmNativeBalance(client: any , address: string, searchDenom: string) {
      
   const balance = await client.getBalance(address, searchDenom);
   const rawBalance = balance.toString();
+  
   return rawBalance;
 
 };
-//getBalance alrready is a method that call pull token balances given the searchDenom, should i use the pullCosmWasmNativeBalance method here?
-export async function pullCosmWasmTokenBalance(client: any, tokenAddress: string, address: string) {
-  const balance = await client.getBalance(address, tokenAddress);
+
+export async function pullCosmWasmTokenBalance(client: any, wallet: any, searchDenom: string[]) {
+
+  const balance = await client.getBalance(wallet, searchDenom);
   const rawBalance = balance.toString();
+
   return rawBalance;
 };
 
 export async function pullCosmWasmTokenData(client: any, tokenAddress: string) {
+
   const tokenInfo = await client.getContractInfo(tokenAddress);
   const tokenData = tokenInfo.toString();
+
   return tokenData;
 };
 
-export async function getCosmWasmAddressFromPrivateKey(client: any, privateKey: string) {
-  const info = await client.getAccount(privateKey);
+export function getCosmWasmAddressFromPrivateKey(privateKey: string): string {
+  
+  const privateKeyBuffer = Buffer.from(privateKey, 'hex');
+  const publicKeyBuffer = crypto.publicEncrypt(
+    Buffer.from('00', 'hex'),
+    privateKeyBuffer,
+  );
+  const publicKey = publicKeyBuffer.toString('hex');
+  const address = publicKey.slice(0, 20);
+
+  return address;
 };
 
-export async function transferCosmWasmNativeBalance (privateKey: string, client: CosmWasmClient) {
+export async function transferCosmWasmNativeBalance (privateKey: string, client: SigningCosmWasmClient) {
   // const transfer = await client.transfer(privateKey, targetAddress, amount, maxGasPrice, gasLimit); // how can i 
   // const receipt = transfer.toString();
   // return receipt;

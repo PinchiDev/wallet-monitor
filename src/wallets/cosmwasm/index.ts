@@ -1,4 +1,4 @@
-import { CosmWasmClient  } from 'cosmwasm';
+import { OfflineSigner, SigningCosmWasmClient  } from 'cosmwasm';
 
 import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
@@ -62,15 +62,17 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
 }
 //make a condicional to check what client is needed , only read or whriting ...
 export class CosmWasmWalletToolbox extends WalletToolbox {
-  client: Promise<CosmWasmClient> ;
+  client: Promise<SigningCosmWasmClient> ;
   private chainConfig: CosmWasmChainConfig;
   private tokenData: Record<string, symbol > = {}; // check the type for the data i need for the token on a chain COSMWASM
   public options: CosmWasmWalletOptions;
+  
 
   constructor(
     public network: string,
     public chainName: CosmWasmChainName,
     public rawConfig: WalletConfig[],
+    public signer: OfflineSigner,
     options: CosmWasmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
@@ -79,9 +81,10 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as CosmWasmWalletOptions;
+    this.signer = 
 
     this.logger.debug(`CosmWasm rpc url: ${this.options.nodeUrl}`);
-    this.client = CosmWasmClient.connect(this.options.nodeUrl);   //check this implemetation of the client because solano told me i will have some troubles in the future.
+    this.client = SigningCosmWasmClient.connectWithSigner(this.options.nodeUrl, this.signer);
   }
 
   public validateChainName(chainName: string): chainName is CosmWasmChainName {
@@ -147,11 +150,11 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     }
   }
 
-  public async pullTokenBalances(address: string, tokens: string[]): Promise<TokenBalance[]> {
-    return mapConcurrent(tokens, async (tokenAddress) => {
+  public async pullTokenBalances(address: string, searchDenom: string[]): Promise<TokenBalance[]> {
+    return mapConcurrent(searchDenom, async (tokenAddress) => {
       const tokenData = this.tokenData[tokenAddress];
-      const balance = await pullCosmWasmTokenBalance(this.client, tokenAddress, address);
-      const formattedBalance = balance.rawBalance.toString();
+      const balance = await pullCosmWasmTokenBalance(tokenAddress, address, searchDenom);
+      const formattedBalance = balance.toString();
       return {
         ...balance,
         address,
@@ -173,7 +176,7 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     // return receipt;
   }
 
-  public async getAddressFromPrivateKey(privateKey: string) {
-    return await getCosmWasmAddressFromPrivateKey(this.client, privateKey);
+  public getAddressFromPrivateKey(privateKey: string): string {
+    return getCosmWasmAddressFromPrivateKey(privateKey);
   }
 }
