@@ -1,5 +1,5 @@
-import { OfflineSigner, SigningCosmWasmClient  } from 'cosmwasm';
-
+import { SigningCosmWasmClient  } from 'cosmwasm';
+import { OfflineSigner as CosmWasmSigner}  from 'cosmos-sdk';
 import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions, TransferRecepit } from '../base-wallet';
@@ -81,7 +81,7 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as CosmWasmWalletOptions;
-    this.signer = 
+    this.signer = new OfflineSigner
 
     this.logger.debug(`CosmWasm rpc url: ${this.options.nodeUrl}`);
     this.client = SigningCosmWasmClient.connectWithSigner(this.options.nodeUrl, this.signer);

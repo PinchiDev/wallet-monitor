@@ -1,5 +1,5 @@
 import { SigningCosmWasmClient } from "cosmwasm";
-var crypto = require('crypto'); //importing the other way gave me errors check this
+import crypto from "crypto"
 
 export async function pullCosmWasmNativeBalance(client: any , address: string, searchDenom: string) {
      

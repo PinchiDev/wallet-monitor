@@ -6,6 +6,7 @@
     "rebalancing": "ts-node ./rebalancing.ts"
   },
   "dependencies": {
+    "cosmos-sdk": "^1.5.1",
     "wallet-monitor": "file:../",
     "winston": "3.8.2"
   },
