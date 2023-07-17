@@ -72,7 +72,7 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     public network: string,
     public chainName: CosmWasmChainName,
     public rawConfig: WalletConfig[],
-    public signer: OfflineSigner,
+    public signer: CosmWasmSigner,
     options: CosmWasmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
@@ -81,7 +81,7 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as CosmWasmWalletOptions;
-    this.signer = new OfflineSigner
+    this.signer = new CosmWasmSigner
 
     this.logger.debug(`CosmWasm rpc url: ${this.options.nodeUrl}`);
     this.client = SigningCosmWasmClient.connectWithSigner(this.options.nodeUrl, this.signer);
