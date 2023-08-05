@@ -5,9 +5,7 @@ import winston from "winston";
 import {createLogger} from "../utils";
 import {IClientWalletManager} from "../i-wallet-manager";
 import {createChannel, createClient} from "nice-grpc";
-import {
-    WalletManagerGRPCServiceDefinition
-} from "./out/wallet-manager-grpc-service";
+//import { WalletManagerGRPCServiceDefinition } from "./out/wallet-manager-grpc-service";
 
 export class ClientWalletManager implements IClientWalletManager {
     private walletManagerGRPCChannel;
@@ -21,7 +19,7 @@ export class ClientWalletManager implements IClientWalletManager {
         this.managers = {} as Record<ChainName, ChainWalletManager>;
 
         this.walletManagerGRPCChannel = createChannel(`${host}:${port}`)
-        this.walletManagerGRPCClient = createClient(WalletManagerGRPCServiceDefinition, this.walletManagerGRPCChannel)
+//        this.walletManagerGRPCClient = createClient(WalletManagerGRPCServiceDefinition, this.walletManagerGRPCChannel)
 
         // Constructing a record of manager for the only purpose of extracting the appropriate provider and private key
         //  to bundle together with the lock acquired from the grpc service.

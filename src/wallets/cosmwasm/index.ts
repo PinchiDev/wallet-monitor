@@ -1,5 +1,3 @@
-import { SigningCosmWasmClient  } from 'cosmwasm';
-import { OfflineSigner as CosmWasmSigner}  from 'cosmos-sdk';
 import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions, TransferRecepit } from '../base-wallet';
@@ -12,6 +10,9 @@ import {
 } from '../../balances/cosmwasm';
 
 import { SeiNetworks, SEI_CHAIN_CONFIG, SEI_NETWORKS, SEI } from './sei.config';
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { string, symbol } from 'zod';
+import { strict } from 'assert';
 
 const COSMWASM_CHAINS = {
   [SEI]: 1,
@@ -60,19 +61,20 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
 
   return [...new Set(tokens)];
 }
-//make a condicional to check what client is needed , only read or whriting ...
+//make a condicional to check what client is needed , only read or whriting?
 export class CosmWasmWalletToolbox extends WalletToolbox {
-  client: Promise<SigningCosmWasmClient> ;
+//  private client: CosmWasmClient;
+//  private signingClient: SigningCosmWasmClient;
   private chainConfig: CosmWasmChainConfig;
   private tokenData: Record<string, symbol > = {}; // check the type for the data i need for the token on a chain COSMWASM
   public options: CosmWasmWalletOptions;
   
 
   constructor(
+    protected client: CosmWasmClient,
     public network: string,
     public chainName: CosmWasmChainName,
     public rawConfig: WalletConfig[],
-    public signer: CosmWasmSigner,
     options: CosmWasmWalletOptions,
   ) {
     super(network, chainName, rawConfig, options);
@@ -81,10 +83,13 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const defaultOptions = this.chainConfig.defaultConfigs[this.network];
 
     this.options = { ...defaultOptions, ...options } as CosmWasmWalletOptions;
-    this.signer = new CosmWasmSigner
 
     this.logger.debug(`CosmWasm rpc url: ${this.options.nodeUrl}`);
-    this.client = SigningCosmWasmClient.connectWithSigner(this.options.nodeUrl, this.signer);
+
+    async function getOnlyQueryClient(nodeUrl: string) {
+      return client = await CosmWasmClient.connect(nodeUrl)
+    }
+    getOnlyQueryClient(this.options.nodeUrl)
   }
 
   public validateChainName(chainName: string): chainName is CosmWasmChainName {
@@ -132,21 +137,23 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const uniqueTokens = getUniqueTokens(Object.values(this.wallets));
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
-      this.tokenData[tokenAddress] = await pullCosmWasmTokenData(this.client, tokenAddress);
+      this.tokenData[tokenAddress] = await pullCosmWasmTokenData(this.options.nodeUrl, tokenAddress) as symbol;
     }, this.options.tokenPollConcurrency);
 
     this.logger.debug(`CosmWasm token data: ${JSON.stringify(this.tokenData)}`);
   }
 
-  public async pullNativeBalance(address: string, searchDenom?: any): Promise<WalletBalance> {
-    const balance = await pullCosmWasmNativeBalance(this.client, address, searchDenom);
+  
+
+// searchDenom is required by the method to be a string so i need to solve the posibility of passing more than one argument...how to handle it
+  public async pullNativeBalance(nodeUrl: string,address: string, searchDenom: string): Promise<WalletBalance> {
+    const balance = await pullCosmWasmNativeBalance(nodeUrl, address, searchDenom);
     const formattedBalance = balance.rawBalance.toString();
     return {
       ...balance,
       address,
       formattedBalance,
-      tokens: [],
-      searchDenom: this.chainConfig.nativeCurrencySymbol,
+      tokens: []
     }
   }
 
