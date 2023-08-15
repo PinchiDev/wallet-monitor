@@ -1,40 +1,38 @@
-import { CosmWasmClient, SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate/build';
+import { SigningCosmWasmClient, CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { DirectSecp256k1HdWallet, OfflineSigner } from '@cosmjs/proto-signing'
 import {
   assertIsDeliverTxSuccess,
-  SigningStargateClient,
   StdFee,
   calculateFee,
   GasPrice,
   coins,
 } from '@cosmjs/stargate'
-import { OfflineSigner } from "@cosmjs/proto-signing"
 import crypto from "crypto"
 
 
-
-export async function pullCosmWasmNativeBalance(nodeUrl: string, address: string, searchDenom: string) {
+export async function pullCosmWasmNativeBalance(nodeUrl: string, searchDenom: string, wallet: string) {
   const client = await CosmWasmClient.connect(nodeUrl)
-  const balance = await client.getBalance(address, searchDenom);
+  const balance = await client.getBalance(wallet, searchDenom);
   const rawBalance = balance.toString();
   
   return {rawBalance};
 
 };
 
-export async function pullCosmWasmTokenBalance(endpoint: string, address: string, searchDenom: string) {
-  const client = await CosmWasmClient.connect(endpoint)
-  const balance = await client.getBalance(address, searchDenom);
+export async function pullCosmWasmTokenBalance(nodeUrl: string, searchDenom: string, wallet: string) {
+  const client = await CosmWasmClient.connect(nodeUrl)
+  const balance = await client.getBalance(wallet, searchDenom);
   const rawBalance = balance.toString();
 
   return {rawBalance};
 };
 
-export async function pullCosmWasmTokenData(endpoint: string, tokenAddress: any) {
-  const client = await CosmWasmClient.connect(endpoint)
+export async function pullCosmWasmTokenData(nodeUrl: string, tokenAddress: string) {
+ /*  const client = await CosmWasmClient.connect(nodeUrl)
   const tokenInfo = await client.getCodeDetails(tokenAddress);// i couldn`t find a method that retrives the token info. what should i do here?
-  const tokenData = tokenInfo.toString();
+  const tokenData = tokenInfo.toString(); */
 
-  return tokenData;
+  return Symbol();
 };
 
 export function getCosmWasmAddressFromPrivateKey(privateKey: string): string {
@@ -50,12 +48,12 @@ export function getCosmWasmAddressFromPrivateKey(privateKey: string): string {
   return address;
 };
 
-export async function transferCosmWasmNativeBalance (wallet: OfflineSigner, rpcEndpoint: string, recipient: string, amount: any) {
+export async function transferCosmWasmNativeBalance (client: SigningCosmWasmClient, wallet: OfflineSigner, rpcEndpoint: string, recipient: string, amount: any) {
 
-  const client = await SigningStargateClient.connectWithSigner(
+/*   const client = await SigningStargateClient.connectWithSigner(
     rpcEndpoint,
     wallet,
-  )
+  ) */
 
   const [firstAccount] = await wallet.getAccounts()
 

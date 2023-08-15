@@ -35,6 +35,11 @@ const allChainWallets = {
       { address: '0xcb39d897bf0561af7531d37db9781e54528269fed4761275931ce32f20352977' },
     ]
   },
+  sei: {
+    wallets: [
+      { address: 'sei1ctu2arglvcl6nq4dt7sngve7zenjg0s9du6ggq' },
+    ]
+  },
   klatyn: {
     rebalance: {
       enabled: false,
