@@ -1,25 +1,20 @@
 import { WalletConfig, WalletBalance, TokenBalance } from '../';
 import { mapConcurrent } from '../../utils';
 import { WalletToolbox, BaseWalletOptions, TransferRecepit } from '../base-wallet';
+import { SeiNetworks, SEI_CHAIN_CONFIG, SEI } from './sei.config';
 import {
-   pullCosmWasmNativeBalance,
-   pullCosmWasmTokenData,
-   pullCosmWasmTokenBalance,
-   transferCosmWasmNativeBalance,
-   getCosmWasmAddressFromPrivateKey
-} from '../../balances/cosmwasm';
+   /*  pullCosmWasmNativeBalance,
+    pullCosmWasmTokenBalance,
+    transferCosmWasmNativeBalance,
+    getCosmWasmAddressFromPrivateKey, */
+    pullCosmWasmTokenData
+ } from '../../balances/cosmwasm';
+import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 
-import { SeiNetworks, SEI_CHAIN_CONFIG, SEI_NETWORKS, SEI } from './sei.config';
-import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
-import { string, symbol } from 'zod';
-import { strict } from 'assert';
-import { OfflineSigner } from '@cosmjs/proto-signing'
-
-const COSMWASM_CHAINS = {
-  [SEI]: 1,
+export const COSMWASM_CHAINS = {
+    [SEI]: 1,
 };
-const COSMWASM_HEX_ADDRESS_REGEX = /^cosmos[a-zA-Z0-9]{39}$/; //check if this is the correct regex
+const COSMWASM_HEX_ADDRESS_REGEX = /^cosmos1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{38}$/; 
 
 type CosmWasmChainConfig = {
   chainName: string;
@@ -44,7 +39,7 @@ export type CosmWasmDefaultConfigs = Record<string, CosmWasmDefaultConfig>; //wh
 export type CosmWasmChainName = keyof typeof COSMWASM_CHAINS;
 
 export const COSMWASM_CHAIN_CONFIGS: Record<CosmWasmChainName, CosmWasmDefaultConfig> = {
-  [SEI]: SEI_CHAIN_CONFIG,
+    [SEI]: SEI_CHAIN_CONFIG,
 };
 
 export type CosmWasmWalletOptions = BaseWalletOptions & {
@@ -63,13 +58,12 @@ function getUniqueTokens(wallets: WalletConfig[]): string[] {
 
   return [...new Set(tokens)];
 }
-//make a condicional to check what client is needed , only read or whriting?
+
 export class CosmWasmWalletToolbox extends WalletToolbox {
   private chainConfig: CosmWasmChainConfig;
   private tokenData: Record<string, symbol > = {};
   public options: CosmWasmWalletOptions;
-/*   private client: SigningCosmWasmClient;
-  private wallet: DirectSecp256k1HdWallet; */
+  connection?: any;
 
   constructor(
     public network: string,
@@ -121,6 +115,7 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
   }
 
   public parseTokensConfig(tokens: string[]): string[] {
+    
     return tokens ? tokens.map((token) => {
       if (COSMWASM_HEX_ADDRESS_REGEX.test(token)) {
         return token;
@@ -133,54 +128,35 @@ export class CosmWasmWalletToolbox extends WalletToolbox {
     const uniqueTokens = getUniqueTokens(Object.values(this.wallets));
 
     await mapConcurrent(uniqueTokens, async (tokenAddress) => {
-      this.tokenData[tokenAddress] = await pullCosmWasmTokenData(this.options.nodeUrl, this.options.address, ) as symbol;
+      this.tokenData[tokenAddress] = await pullCosmWasmTokenData(this.connection, tokenAddress);
     }, this.options.tokenPollConcurrency);
 
     this.logger.debug(`CosmWasm token data: ${JSON.stringify(this.tokenData)}`);
+
+    this.connection = this.stablishConnection(this.options.nodeUrl)
   }
 
-  
+  public async stablishConnection(nodeUrl: string) {
+    const connectedClient = await CosmWasmClient.connect(nodeUrl)
+    return connectedClient
+    }
+
   
   public async pullNativeBalance(address: string): Promise<WalletBalance> {
-    const balance = await pullCosmWasmNativeBalance(this.options.nodeUrl, this.chainConfig.nativeCurrencySymbol, this.options.address);
-    const formattedBalance = balance.toString();
-    return {
-      ...balance,
-      address,
-      formattedBalance,
-      tokens: [],
-      symbol: this.chainConfig.nativeCurrencySymbol,
-      isNative: true  // why in SolanaWalletToolbox this property is missing???
-    }
+    throw new Error('Not implemented');
   }
 
   public async pullTokenBalances(address: string, searchDenom: string[]): Promise<TokenBalance[]> {
-    return mapConcurrent(searchDenom, async (tokenAddress) => {
-      const tokenData = this.tokenData[tokenAddress];
-      const balance = await pullCosmWasmTokenBalance(this.options.nodeUrl, tokenAddress, this.options.address);
-      const formattedBalance = balance.toString();
-      return {
-        ...balance,
-        address,
-        tokenAddress,
-        formattedBalance,
-        symbol: tokenData,
-      };
-    }, this.options.tokenPollConcurrency);
+    throw new Error('Not implemented');
   }
-//warmup , compilation
+
   public async transferNativeBalance(
     privateKey: string, targetAddress: string, amount: number, maxGasPrice?: number, gasLimit?: number,
-  ): Promise<TransferRecepit> {
-    
+  ): Promise<TransferRecepit> {  
     throw new Error('Not implemented');
-    // const txDetails = { targetAddress, amount, maxGasPrice, gasLimit };
-    // const receipt = await transferCosmWasmNativeBalance(this.client, privateKey, txDetails);
-
-    // return receipt;
   }
 
   public getAddressFromPrivateKey(privateKey: string): string {
-    return getCosmWasmAddressFromPrivateKey(privateKey);
+    throw new Error('Not implemented');
   }
 }
